@@ -2,7 +2,7 @@ resource "openstack_compute_instance_v2" "central-manager" {
 
   name            = "${var.name_prefix}central-manager${var.name_suffix}"
   flavor_name     = var.flavors["central-manager"]
-  image_id        = openstack_images_image_v2.vgcn-image.id
+  image_id        = "41a6485e-72d8-4e37-8a8b-5ae90dca443d"
   key_pair        = openstack_compute_keypair_v2.my-cloud-key.name
   security_groups = var.secgroups_cm
 
