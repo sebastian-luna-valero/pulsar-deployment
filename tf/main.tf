@@ -7,23 +7,20 @@ resource "openstack_compute_instance_v2" "central-manager" {
   security_groups = var.secgroups_cm
 
   network {
-    uuid = data.openstack_networking_network_v2.external.id
-  }
-  network {
     uuid = openstack_networking_network_v2.internal.id
   }
 
-  provisioner "local-exec" {
-    command = <<-EOF
-      ansible-galaxy install -p ansible/roles git+https://github.com/usegalaxy-it/ansible-role-htcondor.git
-      sleep 450
-        ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u centos -b -i '${self.access_ip_v4},' \
-        --private-key ${var.pvt_key} --extra-vars='condor_ip_range=${var.private_network.cidr4}
-        htcondor_server=${self.network.1.fixed_ip_v4} htcondor_password=${var.condor_pass}
-        message_queue_url="${var.mq_string}"' \
-        ansible/main.yml
-    EOF
-  }
+//  provisioner "local-exec" {
+//    command = <<-EOF
+//      ansible-galaxy install -p ansible/roles git+https://github.com/usegalaxy-it/ansible-role-htcondor.git
+//      sleep 450
+//        ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u centos -b -i '${openstack_networking_floatingip_v2.central_manager_public_ip.address},' \
+//        --private-key ${var.pvt_key} --extra-vars='condor_ip_range=${var.private_network.cidr4}
+//        htcondor_server=${self.network.0.fixed_ip_v4} htcondor_password=${var.condor_pass}
+//        message_queue_url="${var.mq_string}"' \
+//        ansible/main.yml
+//    EOF
+//  }
 
   user_data = <<-EOF
     #cloud-config
@@ -84,4 +81,18 @@ resource "openstack_compute_instance_v2" "central-manager" {
       - [ sh, -xc, "sed -i 's|localhost.localdomain|$(hostname -f)|g' /etc/telegraf/telegraf.conf" ]
       - systemctl restart telegraf
   EOF
+}
+
+resource "openstack_networking_floatingip_v2" "central_manager_public_ip" {
+  pool = var.public_network
+}
+
+data "openstack_networking_port_v2" "vm-port" {
+  device_id  = openstack_compute_instance_v2.central-manager.id
+  network_id = openstack_compute_instance_v2.central-manager.network.0.uuid
+}
+
+resource "openstack_networking_floatingip_associate_v2" "central_manager_public_ip_associate" {
+  floating_ip = openstack_networking_floatingip_v2.central_manager_public_ip.address
+  port_id     = data.openstack_networking_port_v2.vm-port.id
 }

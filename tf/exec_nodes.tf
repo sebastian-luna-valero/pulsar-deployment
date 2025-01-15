@@ -75,7 +75,7 @@ resource "openstack_compute_instance_v2" "exec-node" {
                 htcondor_version: 10.x
                 htcondor_type_of_node: wn
                 htcondor_role_execute: true
-                htcondor_server: ${openstack_compute_instance_v2.central-manager.network.1.fixed_ip_v4}
+                htcondor_server: ${openstack_compute_instance_v2.central-manager.network.0.fixed_ip_v4}
                 htcondor_password: ${var.condor_pass}
           tasks:
             - name: Disable pulsar

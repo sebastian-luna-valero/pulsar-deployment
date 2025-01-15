@@ -16,6 +16,7 @@ resource "openstack_compute_instance_v2" "nfs-server" {
     destination_type      = "local"
     boot_index            = 0
     delete_on_termination = true
+    multiattach           = true
   }
 
   block_device {
